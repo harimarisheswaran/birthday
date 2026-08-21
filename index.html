@@ -797,12 +797,11 @@
 <div class="petals-bg"  id="petalsContainer"  aria-hidden="true"></div>
 
 <!-- ══════════════════════════════════════════════════
-     AUDIO PLAYER  (Neeyum Naanum Anbe - WFYMlreIYBQ)
+     YOUTUBE PLAYER (Neeyum Naanum Anbe - WFYMlreIYBQ)
 ══════════════════════════════════════════════════ -->
-<audio id="bgMusic" loop preload="auto">
-  <source src="https://ia801509.us.archive.org/18/items/neeyum-naanum-anbe-song/Neeyum%20Naanum%20Anbe.mp3" type="audio/mpeg" />
-  <source src="https://cdn.jiosaavn.com/res-3/data/c3/8c/7f/neeyum_naanum_anbe.mp3" type="audio/mpeg" />
-</audio>
+<div id="yt-player-container" style="position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;opacity:0;pointer-events:none;">
+  <div id="player"></div>
+</div>
 
 <!-- ══════════════════════════════════════════════════
      LOADING SCREEN
@@ -1187,35 +1186,62 @@ navToggle.addEventListener('click', () => mobileMenu.classList.contains('open') 
 document.querySelectorAll('#mobileMenu .mob-link').forEach(a => a.addEventListener('click', closeMenu));
 
 /* ─────────────────────────────────────────────────────────
-   MUSIC  —  Ulaga Pookalin Vaasam (HTML5 Audio)
+   MUSIC  —  Neeyum Naanum Anbe (YouTube Player API)
 ──────────────────────────────────────────────────────────── */
 const musicBtn = document.getElementById('music-indicator');
-const audio    = document.getElementById('bgMusic');
-let   musicOn  = false;
+let player = null;
+let playerReady = false;
+let userWantsMusic = false;
+
+// Load YouTube API
+const tag = document.createElement('script');
+tag.src = "https://www.youtube.com/iframe_api";
+const firstScriptTag = document.getElementsByTagName('script')[0];
+firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+window.onYouTubeIframeAPIReady = function() {
+  player = new YT.Player('player', {
+    height: '1',
+    width: '1',
+    videoId: 'WFYMlreIYBQ',
+    playerVars: {
+      'autoplay': 0,
+      'controls': 0,
+      'loop': 1,
+      'playlist': 'WFYMlreIYBQ',
+      'playsinline': 1
+    },
+    events: {
+      'onReady': onPlayerReady
+    }
+  });
+};
+
+function onPlayerReady(event) {
+  playerReady = true;
+  if (userWantsMusic) {
+    player.playVideo();
+    musicBtn.classList.add('show');
+  }
+}
 
 function startMusic() {
-  if (musicOn) return;
-  musicOn = true;
-  audio.volume = 0.8;
-  const playPromise = audio.play();
-  if (playPromise !== undefined) {
-    playPromise.then(() => {
-      musicBtn.classList.add('show');
-    }).catch(error => {
-      console.log('Playback error:', error);
-      musicBtn.classList.add('show');
-      musicBtn.classList.add('music-paused');
-    });
+  userWantsMusic = true;
+  if (playerReady && player) {
+    player.playVideo();
+    musicBtn.classList.add('show');
   }
 }
 
 musicBtn.addEventListener('click', () => {
-  if (audio.paused) {
-    audio.play();
-    musicBtn.classList.remove('music-paused');
-  } else {
-    audio.pause();
+  if (!playerReady || !player) return;
+  const state = player.getPlayerState();
+  if (state === YT.PlayerState.PLAYING) {
+    player.pauseVideo();
     musicBtn.classList.add('music-paused');
+  } else {
+    player.playVideo();
+    musicBtn.classList.remove('music-paused');
   }
 });
 
