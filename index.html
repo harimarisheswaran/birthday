@@ -391,6 +391,11 @@
       display: flex; align-items: center; justify-content: center;
       font-size: clamp(2.2rem, 7vw, 3.5rem);
       transition: transform 0.5s ease;
+      background-size: cover; background-position: center;
+    }
+    .gallery-card-img {
+      width: 100%; height: 100%; object-fit: cover;
+      transition: transform 0.5s ease;
     }
     .gallery-card-overlay {
       position: absolute; inset: 0;
@@ -1046,14 +1051,14 @@ const CONFIG = {
   birthdayDate: '2026-08-22',
 
   galleryItems: [
-    { emoji: '🌸', bg: 'linear-gradient(135deg,#3d1030,#6b1a40)', caption: 'The day we first met',   date: 'A magical beginning' },
-    { emoji: '🌹', bg: 'linear-gradient(135deg,#2d0a28,#5c1840)', caption: 'Our first date',          date: 'A night to remember' },
-    { emoji: '🌙', bg: 'linear-gradient(135deg,#0d1035,#2a1878)', caption: 'Stargazing together',     date: 'Under a thousand stars' },
-    { emoji: '✈️', bg: 'linear-gradient(135deg,#0a2a35,#185c78)', caption: 'Adventures together',     date: 'The world is ours' },
-    { emoji: '🎂', bg: 'linear-gradient(135deg,#35100d,#782018)', caption: 'Your last birthday',      date: 'Celebrating you' },
-    { emoji: '💃', bg: 'linear-gradient(135deg,#351030,#782060)', caption: 'Dancing in the rain',     date: 'Spontaneous joy' },
-    { emoji: '🍽️', bg: 'linear-gradient(135deg,#352810,#786820)', caption: 'Cooking together',        date: 'Our favourite evenings' },
-    { emoji: '📖', bg: 'linear-gradient(135deg,#103520,#205040)', caption: 'Reading mornings',        date: 'Quiet, perfect moments' },
+    { emoji: '🌸', image: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80', bg: 'linear-gradient(135deg,#3d1030,#6b1a40)', caption: 'My Love Eniya Sri ❤️', date: 'A magical beginning' },
+    { emoji: '🌹', image: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=600&q=80', bg: 'linear-gradient(135deg,#2d0a28,#5c1840)', caption: 'Our Special Moments', date: 'A night to remember' },
+    { emoji: '🌙', image: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=600&q=80', bg: 'linear-gradient(135deg,#0d1035,#2a1878)', caption: 'Stargazing Together', date: 'Under a thousand stars' },
+    { emoji: '✈️', image: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=600&q=80', bg: 'linear-gradient(135deg,#0a2a35,#185c78)', caption: 'Adventures Together', date: 'The world is ours' },
+    { emoji: '🎂', image: 'https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?auto=format&fit=crop&w=600&q=80', bg: 'linear-gradient(135deg,#35100d,#782018)', caption: 'Celebrating You', date: 'Your Birthday Joy' },
+    { emoji: '💃', image: 'https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?auto=format&fit=crop&w=600&q=80', bg: 'linear-gradient(135deg,#351030,#782060)', caption: 'Spontaneous Joy', date: 'Dancing in happiness' },
+    { emoji: '🍽️', image: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=600&q=80', bg: 'linear-gradient(135deg,#352810,#786820)', caption: 'Sweet Evenings', date: 'Our favourite times' },
+    { emoji: '📖', image: 'https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?auto=format&fit=crop&w=600&q=80', bg: 'linear-gradient(135deg,#103520,#205040)', caption: 'Quiet Perfect Moments', date: 'Forever & Always' },
   ],
 
   reasons: [
@@ -1270,8 +1275,13 @@ const revealObs = new IntersectionObserver(entries => {
     const card = document.createElement('article');
     card.className = 'gallery-card';
     card.style.transitionDelay = (i * 0.07) + 's';
+    
+    const mediaContent = item.image 
+      ? `<img src="${item.image}" alt="${item.caption}" class="gallery-card-img" />`
+      : `<div class="gallery-card-bg" style="background:${item.bg}" role="img" aria-label="${item.caption}">${item.emoji}</div>`;
+
     card.innerHTML = `
-      <div class="gallery-card-bg" style="background:${item.bg}" role="img" aria-label="${item.caption}">${item.emoji}</div>
+      ${mediaContent}
       <div class="gallery-card-overlay">
         <p class="gallery-card-caption">${item.caption}</p>
         <span class="gallery-card-date">${item.date}</span>
