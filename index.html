@@ -797,15 +797,12 @@
 <div class="petals-bg"  id="petalsContainer"  aria-hidden="true"></div>
 
 <!-- ══════════════════════════════════════════════════
-     AUDIO
+     YOUTUBE MUSIC PLAYER  (Ulaga Pookalin Vaasam)
 ══════════════════════════════════════════════════ -->
-<audio id="bgMusic" loop>
-  <!--
-    CUSTOMISE: Replace the src with your own MP3 file path, e.g.:
-    <source src="birthday.mp3" type="audio/mpeg" />
-  -->
-  <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mpeg" />
-</audio>
+<div id="yt-player-wrap" aria-hidden="true"
+     style="position:fixed;width:1px;height:1px;overflow:hidden;opacity:0;pointer-events:none;top:-9999px;left:-9999px;">
+  <div id="yt-player"></div>
+</div>
 
 <!-- ══════════════════════════════════════════════════
      LOADING SCREEN
@@ -1190,23 +1187,74 @@ navToggle.addEventListener('click', () => mobileMenu.classList.contains('open') 
 document.querySelectorAll('#mobileMenu .mob-link').forEach(a => a.addEventListener('click', closeMenu));
 
 /* ─────────────────────────────────────────────────────────
-   MUSIC
+   YOUTUBE MUSIC  —  Ulaga Pookalin Vaasam
+   Video: https://www.youtube.com/watch?v=immRvudN4pY
 ──────────────────────────────────────────────────────────── */
-const audio      = document.getElementById('bgMusic');
-const musicBtn   = document.getElementById('music-indicator');
-let   musicOn    = false;
+const musicBtn = document.getElementById('music-indicator');
+let   ytPlayer = null;
+let   musicOn  = false;
+let   ytReady  = false;
+let   playPending = false;   // play as soon as API is ready
+
+// Load YouTube IFrame API script dynamically
+(function loadYTApi() {
+  const tag = document.createElement('script');
+  tag.src   = 'https://www.youtube.com/iframe_api';
+  document.head.appendChild(tag);
+}());
+
+// Called automatically by YouTube IFrame API when ready
+window.onYouTubeIframeAPIReady = function () {
+  ytPlayer = new YT.Player('yt-player', {
+    videoId: 'immRvudN4pY',   // Ulaga Pookalin Vaasam
+    playerVars: {
+      autoplay: 0,
+      controls: 0,
+      disablekb: 1,
+      loop: 1,
+      playlist: 'immRvudN4pY',   // needed for loop to work
+      rel: 0,
+      modestbranding: 1,
+      playsinline: 1,
+    },
+    events: {
+      onReady: function (e) {
+        ytReady = true;
+        e.target.setVolume(55);
+        if (playPending) {
+          e.target.playVideo();
+          musicBtn.classList.add('show');
+        }
+      },
+      onStateChange: function (e) {
+        // If video ends (shouldn't with loop) restart it
+        if (e.data === YT.PlayerState.ENDED) e.target.playVideo();
+      },
+    },
+  });
+};
 
 function startMusic() {
   if (musicOn) return;
   musicOn = true;
-  audio.volume = 0.35;
-  audio.play().catch(() => {});
-  musicBtn.classList.add('show');
+  if (ytReady && ytPlayer) {
+    ytPlayer.playVideo();
+    musicBtn.classList.add('show');
+  } else {
+    playPending = true;   // will auto-play once API loads
+  }
 }
 
 musicBtn.addEventListener('click', () => {
-  if (audio.paused) { audio.play(); musicBtn.classList.remove('music-paused'); }
-  else              { audio.pause(); musicBtn.classList.add('music-paused'); }
+  if (!ytReady || !ytPlayer) return;
+  const state = ytPlayer.getPlayerState();
+  if (state === YT.PlayerState.PLAYING) {
+    ytPlayer.pauseVideo();
+    musicBtn.classList.add('music-paused');
+  } else {
+    ytPlayer.playVideo();
+    musicBtn.classList.remove('music-paused');
+  }
 });
 
 /* ─────────────────────────────────────────────────────────
