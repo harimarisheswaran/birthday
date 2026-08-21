@@ -799,10 +799,15 @@
 <!-- ══════════════════════════════════════════════════
      YOUTUBE MUSIC PLAYER  (Ulaga Pookalin Vaasam)
 ══════════════════════════════════════════════════ -->
-<div id="yt-player-wrap" aria-hidden="true"
-     style="position:fixed;width:1px;height:1px;overflow:hidden;opacity:0;pointer-events:none;top:-9999px;left:-9999px;">
-  <div id="yt-player"></div>
-</div>
+<iframe
+  id="yt-frame"
+  src=""
+  frameborder="0"
+  allow="autoplay; encrypted-media; picture-in-picture"
+  allowfullscreen
+  aria-hidden="true"
+  style="position:fixed;width:1px;height:1px;top:-9999px;left:-9999px;opacity:0;pointer-events:none;"
+></iframe>
 
 <!-- ══════════════════════════════════════════════════
      LOADING SCREEN
@@ -1187,73 +1192,51 @@ navToggle.addEventListener('click', () => mobileMenu.classList.contains('open') 
 document.querySelectorAll('#mobileMenu .mob-link').forEach(a => a.addEventListener('click', closeMenu));
 
 /* ─────────────────────────────────────────────────────────
-   YOUTUBE MUSIC  —  Ulaga Pookalin Vaasam
-   Video: https://www.youtube.com/watch?v=immRvudN4pY
+   MUSIC  —  Ulaga Pookalin Vaasam
+   https://www.youtube.com/watch?v=immRvudN4pY
+   Strategy: set iframe src on first user-click (browser allows
+   autoplay after a real gesture). Pause/resume via postMessage.
 ──────────────────────────────────────────────────────────── */
 const musicBtn = document.getElementById('music-indicator');
-let   ytPlayer = null;
+const ytFrame  = document.getElementById('yt-frame');
 let   musicOn  = false;
-let   ytReady  = false;
-let   playPending = false;   // play as soon as API is ready
+let   ytPaused = false;
 
-// Load YouTube IFrame API script dynamically
-(function loadYTApi() {
-  const tag = document.createElement('script');
-  tag.src   = 'https://www.youtube.com/iframe_api';
-  document.head.appendChild(tag);
-}());
+/* YouTube embed URL — autoplay=1 starts as soon as iframe loads */
+const YT_PLAY_SRC =
+  'https://www.youtube.com/embed/immRvudN4pY' +
+  '?autoplay=1&loop=1&playlist=immRvudN4pY' +
+  '&controls=0&rel=0&enablejsapi=1&playsinline=1&mute=0';
 
-// Called automatically by YouTube IFrame API when ready
-window.onYouTubeIframeAPIReady = function () {
-  ytPlayer = new YT.Player('yt-player', {
-    videoId: 'immRvudN4pY',   // Ulaga Pookalin Vaasam
-    playerVars: {
-      autoplay: 0,
-      controls: 0,
-      disablekb: 1,
-      loop: 1,
-      playlist: 'immRvudN4pY',   // needed for loop to work
-      rel: 0,
-      modestbranding: 1,
-      playsinline: 1,
-    },
-    events: {
-      onReady: function (e) {
-        ytReady = true;
-        e.target.setVolume(55);
-        if (playPending) {
-          e.target.playVideo();
-          musicBtn.classList.add('show');
-        }
-      },
-      onStateChange: function (e) {
-        // If video ends (shouldn't with loop) restart it
-        if (e.data === YT.PlayerState.ENDED) e.target.playVideo();
-      },
-    },
-  });
-};
+function postToYT(funcName) {
+  try {
+    ytFrame.contentWindow.postMessage(
+      JSON.stringify({ event: 'command', func: funcName, args: [] }),
+      'https://www.youtube.com'
+    );
+  } catch (e) { /* cross-origin guard */ }
+}
 
 function startMusic() {
   if (musicOn) return;
   musicOn = true;
-  if (ytReady && ytPlayer) {
-    ytPlayer.playVideo();
-    musicBtn.classList.add('show');
-  } else {
-    playPending = true;   // will auto-play once API loads
-  }
+  /* Setting src here — inside a real click handler — satisfies
+     the browser autoplay policy on all modern browsers & mobiles */
+  ytFrame.src = YT_PLAY_SRC;
+  ytPaused    = false;
+  musicBtn.classList.add('show');
 }
 
 musicBtn.addEventListener('click', () => {
-  if (!ytReady || !ytPlayer) return;
-  const state = ytPlayer.getPlayerState();
-  if (state === YT.PlayerState.PLAYING) {
-    ytPlayer.pauseVideo();
+  if (!musicOn) return;
+  if (!ytPaused) {
+    postToYT('pauseVideo');
     musicBtn.classList.add('music-paused');
+    ytPaused = true;
   } else {
-    ytPlayer.playVideo();
+    postToYT('playVideo');
     musicBtn.classList.remove('music-paused');
+    ytPaused = false;
   }
 });
 
